@@ -13,6 +13,6 @@ RUN go install -v ./...
 
 RUN go build -o /build
 
-EXPOSE 8080
+EXPOSE 3001
 
 CMD [ "/build" ]
