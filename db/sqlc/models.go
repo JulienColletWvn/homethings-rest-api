@@ -16,7 +16,6 @@ type ApiKey struct {
 type Data struct {
 	ID         int32         `json:"id"`
 	CreatedAt  sql.NullTime  `json:"created_at"`
-	UpdatedAt  sql.NullTime  `json:"updated_at"`
 	DataTypeID sql.NullInt32 `json:"data_type_id"`
 	Value      float64       `json:"value"`
 }

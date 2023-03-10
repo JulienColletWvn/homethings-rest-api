@@ -14,7 +14,6 @@ CREATE TABLE "data_types" (
 CREATE TABLE "datas" (
   "id" SERIAL PRIMARY KEY,
   "created_at" TIMESTAMPTZ DEFAULT (now()),
-  "updated_at" TIMESTAMPTZ DEFAULT (now()),
   "data_type_id" int,
   "value" float NOT NULL
 );

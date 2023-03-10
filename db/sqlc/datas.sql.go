@@ -13,7 +13,7 @@ import (
 const createData = `-- name: CreateData :one
 INSERT INTO datas (data_type_id, value)
 VALUES ($1, $2)
-RETURNING id, created_at, updated_at, data_type_id, value
+RETURNING id, created_at, data_type_id, value
 `
 
 type CreateDataParams struct {
@@ -27,7 +27,6 @@ func (q *Queries) CreateData(ctx context.Context, arg CreateDataParams) (Data, e
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
-		&i.UpdatedAt,
 		&i.DataTypeID,
 		&i.Value,
 	)
@@ -35,7 +34,7 @@ func (q *Queries) CreateData(ctx context.Context, arg CreateDataParams) (Data, e
 }
 
 const getAllDeviceDatas = `-- name: GetAllDeviceDatas :many
-SELECT datas.id, created_at, updated_at, data_type_id, value, data_types.id, key, unit, device_id
+SELECT datas.id, created_at, data_type_id, value, data_types.id, key, unit, device_id
 FROM datas
     JOIN data_types ON datas.data_type_id = data_types.id
 WHERE data_types.device_id = $1
@@ -44,7 +43,6 @@ WHERE data_types.device_id = $1
 type GetAllDeviceDatasRow struct {
 	ID         int32          `json:"id"`
 	CreatedAt  sql.NullTime   `json:"created_at"`
-	UpdatedAt  sql.NullTime   `json:"updated_at"`
 	DataTypeID sql.NullInt32  `json:"data_type_id"`
 	Value      float64        `json:"value"`
 	ID_2       int32          `json:"id_2"`
@@ -65,7 +63,6 @@ func (q *Queries) GetAllDeviceDatas(ctx context.Context, deviceID sql.NullString
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 			&i.DataTypeID,
 			&i.Value,
 			&i.ID_2,
@@ -84,7 +81,7 @@ func (q *Queries) GetAllDeviceDatas(ctx context.Context, deviceID sql.NullString
 }
 
 const getDeviceDatas = `-- name: GetDeviceDatas :many
-SELECT datas.id, created_at, updated_at, data_type_id, value, data_types.id, key, unit, device_id
+SELECT datas.id, created_at, data_type_id, value, data_types.id, key, unit, device_id
 FROM datas
     JOIN data_types ON datas.data_type_id = data_types.id
 WHERE data_types.device_id = $1
@@ -99,7 +96,6 @@ type GetDeviceDatasParams struct {
 type GetDeviceDatasRow struct {
 	ID         int32          `json:"id"`
 	CreatedAt  sql.NullTime   `json:"created_at"`
-	UpdatedAt  sql.NullTime   `json:"updated_at"`
 	DataTypeID sql.NullInt32  `json:"data_type_id"`
 	Value      float64        `json:"value"`
 	ID_2       int32          `json:"id_2"`
@@ -120,7 +116,6 @@ func (q *Queries) GetDeviceDatas(ctx context.Context, arg GetDeviceDatasParams) 
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 			&i.DataTypeID,
 			&i.Value,
 			&i.ID_2,
