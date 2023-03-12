@@ -33,42 +33,59 @@ func (q *Queries) CreateData(ctx context.Context, arg CreateDataParams) (Data, e
 	return i, err
 }
 
-const getAllDeviceDatas = `-- name: GetAllDeviceDatas :many
-SELECT datas.id, created_at, data_type_id, value, data_types.id, key, unit, device_id
+const getDatas = `-- name: GetDatas :many
+SELECT datas.created_at,
+    datas."value",
+    data_types."key",
+    data_types.unit,
+    devices."name",
+    devices."location"
 FROM datas
-    JOIN data_types ON datas.data_type_id = data_types.id
+    JOIN data_types ON data_types.id = datas.data_type_id
+    JOIN devices ON devices.id = data_types.device_id
 WHERE data_types.device_id = $1
+    AND data_types.key = $2
+    AND datas.created_at BETWEEN $3 AND $4
+ORDER BY datas.created_at ASC
 `
 
-type GetAllDeviceDatasRow struct {
-	ID         int32          `json:"id"`
-	CreatedAt  sql.NullTime   `json:"created_at"`
-	DataTypeID sql.NullInt32  `json:"data_type_id"`
-	Value      float64        `json:"value"`
-	ID_2       int32          `json:"id_2"`
-	Key        string         `json:"key"`
-	Unit       string         `json:"unit"`
-	DeviceID   sql.NullString `json:"device_id"`
+type GetDatasParams struct {
+	DeviceID    sql.NullString `json:"device_id"`
+	Key         string         `json:"key"`
+	CreatedAt   sql.NullTime   `json:"created_at"`
+	CreatedAt_2 sql.NullTime   `json:"created_at_2"`
 }
 
-func (q *Queries) GetAllDeviceDatas(ctx context.Context, deviceID sql.NullString) ([]GetAllDeviceDatasRow, error) {
-	rows, err := q.db.Query(ctx, getAllDeviceDatas, deviceID)
+type GetDatasRow struct {
+	CreatedAt sql.NullTime `json:"created_at"`
+	Value     float64      `json:"value"`
+	Key       string       `json:"key"`
+	Unit      string       `json:"unit"`
+	Name      string       `json:"name"`
+	Location  string       `json:"location"`
+}
+
+func (q *Queries) GetDatas(ctx context.Context, arg GetDatasParams) ([]GetDatasRow, error) {
+	rows, err := q.db.Query(ctx, getDatas,
+		arg.DeviceID,
+		arg.Key,
+		arg.CreatedAt,
+		arg.CreatedAt_2,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetAllDeviceDatasRow
+	var items []GetDatasRow
 	for rows.Next() {
-		var i GetAllDeviceDatasRow
+		var i GetDatasRow
 		if err := rows.Scan(
-			&i.ID,
 			&i.CreatedAt,
-			&i.DataTypeID,
 			&i.Value,
-			&i.ID_2,
 			&i.Key,
 			&i.Unit,
-			&i.DeviceID,
+			&i.Name,
+			&i.Location,
 		); err != nil {
 			return nil, err
 		}
@@ -80,55 +97,46 @@ func (q *Queries) GetAllDeviceDatas(ctx context.Context, deviceID sql.NullString
 	return items, nil
 }
 
-const getDeviceDatas = `-- name: GetDeviceDatas :many
-SELECT datas.id, created_at, data_type_id, value, data_types.id, key, unit, device_id
+const getLastData = `-- name: GetLastData :one
+SELECT datas.created_at,
+    datas."value",
+    data_types."key",
+    data_types.unit,
+    devices."name",
+    devices."location"
 FROM datas
-    JOIN data_types ON datas.data_type_id = data_types.id
+    JOIN data_types ON data_types.id = datas.data_type_id
+    JOIN devices ON devices.id = data_types.device_id
 WHERE data_types.device_id = $1
     AND data_types.key = $2
+ORDER BY datas.created_at DESC
+LIMIT 1
 `
 
-type GetDeviceDatasParams struct {
+type GetLastDataParams struct {
 	DeviceID sql.NullString `json:"device_id"`
 	Key      string         `json:"key"`
 }
 
-type GetDeviceDatasRow struct {
-	ID         int32          `json:"id"`
-	CreatedAt  sql.NullTime   `json:"created_at"`
-	DataTypeID sql.NullInt32  `json:"data_type_id"`
-	Value      float64        `json:"value"`
-	ID_2       int32          `json:"id_2"`
-	Key        string         `json:"key"`
-	Unit       string         `json:"unit"`
-	DeviceID   sql.NullString `json:"device_id"`
+type GetLastDataRow struct {
+	CreatedAt sql.NullTime `json:"created_at"`
+	Value     float64      `json:"value"`
+	Key       string       `json:"key"`
+	Unit      string       `json:"unit"`
+	Name      string       `json:"name"`
+	Location  string       `json:"location"`
 }
 
-func (q *Queries) GetDeviceDatas(ctx context.Context, arg GetDeviceDatasParams) ([]GetDeviceDatasRow, error) {
-	rows, err := q.db.Query(ctx, getDeviceDatas, arg.DeviceID, arg.Key)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetDeviceDatasRow
-	for rows.Next() {
-		var i GetDeviceDatasRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.DataTypeID,
-			&i.Value,
-			&i.ID_2,
-			&i.Key,
-			&i.Unit,
-			&i.DeviceID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) GetLastData(ctx context.Context, arg GetLastDataParams) (GetLastDataRow, error) {
+	row := q.db.QueryRow(ctx, getLastData, arg.DeviceID, arg.Key)
+	var i GetLastDataRow
+	err := row.Scan(
+		&i.CreatedAt,
+		&i.Value,
+		&i.Key,
+		&i.Unit,
+		&i.Name,
+		&i.Location,
+	)
+	return i, err
 }

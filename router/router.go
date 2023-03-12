@@ -23,6 +23,12 @@ func SetupRoutes(app *fiber.App) {
 
 	datas := api.Group("/datas")
 	datas.Post("/", handler.CreateData)
-	datas.Get("/", handler.GetDatas)
 
+	deviceDatas := dataTypes.Group("/:dataTypeKey/datas")
+	deviceDatas.Get("/", handler.GetAllDatas)
+	deviceDatas.Get("/last", handler.GetLastData)
+	deviceDatas.Get("/yearly", handler.GetYearlyDatas)
+	deviceDatas.Get("/monthly", handler.GetMonthlyDatas)
+	deviceDatas.Get("/daily", handler.GetDailyDatas)
+	deviceDatas.Get("/hourly", handler.GetHourlyDatas)
 }
